@@ -1,0 +1,19 @@
+{
+  "brand": {
+    "name": "Workshop 點名系統",
+    "shortName": "點名"
+  },
+  "nav": [
+    { "route": "/summary", "label": "資料匯總", "icon": "home", "protected": false },
+    { "route": "/scan", "label": "點名讀卡", "icon": "nfc", "protected": true },
+    { "route": "/sessions", "label": "場次管理", "icon": "calendar", "protected": true },
+    { "route": "/members", "label": "成員管理", "icon": "users", "protected": true }
+  ],
+  "defaultRoute": "/summary",
+  "summaryTiles": [
+    { "key": "totalSessions", "label": "場次總數", "color": "info" },
+    { "key": "totalMembers", "label": "登記成員", "color": "info" },
+    { "key": "todayCheckins", "label": "今日簽到", "color": "success" },
+    { "key": "activeSessionRate", "label": "目前場次出席率", "color": "warning" }
+  ]
+}

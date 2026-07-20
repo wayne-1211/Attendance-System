@@ -1,0 +1,40 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">資料匯總</h1>
+    <p class="page-subtitle">檢視各場次出席狀況，此頁面不需要密碼</p>
+  </div>
+</div>
+
+<div class="layout-3col">
+  <div class="col-left col-sticky">
+    <div class="card">
+      <h2 class="card-section-title">場次</h2>
+      <div class="search-box" style="margin-bottom:12px;">
+        <span class="ico-svg" style="--icon-url:url('images/icons/search.svg'); mask-image: var(--icon-url); -webkit-mask-image: var(--icon-url);"></span>
+        <input class="input" id="summary-session-search" placeholder="搜尋場次…" />
+      </div>
+      <div class="list" id="summary-session-list">
+        <div class="state-block"><div class="spinner"></div>載入中…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-main">
+    <div class="card">
+      <h2 class="card-section-title" id="summary-session-title">請選擇場次</h2>
+      <div class="list" id="summary-attendance-list">
+        <div class="list-empty">
+          <div class="list-empty-title">尚未選擇場次</div>
+          <div class="list-empty-desc">從左側選擇一個場次以檢視出席名單</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right col-sticky">
+    <div class="card">
+      <h2 class="card-section-title">摘要</h2>
+      <div class="tile-grid" id="summary-tiles"></div>
+    </div>
+  </div>
+</div>
