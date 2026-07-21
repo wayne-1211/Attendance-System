@@ -30,7 +30,7 @@
   border-radius: 50%;
   object-fit: cover;
   flex: none;
-  background: var(--card-bg-alt);
+  background: var(--cffy-theme-light-a0);
 }
 
 .brand-text {

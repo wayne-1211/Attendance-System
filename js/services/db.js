@@ -103,13 +103,10 @@ export async function deleteSession(id) {
 
 export async function listAttendanceForSession(sessionId) {
   const snap = await getDocs(
-    query(
-      collection(getDb(), 'attendance'),
-      where('sessionId', '==', sessionId),
-      orderBy('checkedInAt', 'desc')
-    )
+    query(collection(getDb(), 'attendance'), where('sessionId', '==', sessionId))
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const records = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return sortByCheckedInDesc(records);
 }
 
 export async function listAllAttendance() {
@@ -145,4 +142,13 @@ export async function addAttendance({ sessionId, memberId, memberName, cardUID }
 
 export async function deleteAttendance(id) {
   await deleteDoc(doc(getDb(), 'attendance', id));
+}
+
+function toMillis(timestamp) {
+  if (!timestamp) return 0;
+  return typeof timestamp.toMillis === 'function' ? timestamp.toMillis() : new Date(timestamp).getTime();
+}
+
+function sortByCheckedInDesc(records) {
+  return [...records].sort((a, b) => toMillis(b.checkedInAt) - toMillis(a.checkedInAt));
 }
