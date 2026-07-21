@@ -11,6 +11,7 @@
     <span class="ico-svg" style="--icon-url:url('images/icons/calendar.svg'); mask-image: var(--icon-url); -webkit-mask-image: var(--icon-url);"></span>
     <span>管理場次</span>
   </a>
+  <span class="badge badge-warning" id="demo-mode-badge" style="display:none;">模擬模式 DEMO</span>
 </div>
 
 <div id="scan-support-banner"></div>
@@ -23,6 +24,15 @@
     <div class="scan-status-title" id="scan-status-title">尚未開始感應</div>
     <div class="scan-status-desc" id="scan-status-desc">請先選擇場次，再點下方按鈕開始感應學生證</div>
     <button type="button" class="btn btn-primary" id="scan-toggle-btn" style="min-width:160px;">開始感應</button>
+
+    <div class="scan-demo-panel" id="scan-demo-panel" style="display:none;">
+      <div class="field">
+        <label class="field-label" for="demo-uid-input">模擬卡號（UID）</label>
+        <input class="input" id="demo-uid-input" list="demo-uid-options" placeholder="輸入或從清單選擇卡號" autocomplete="off" />
+        <datalist id="demo-uid-options"></datalist>
+      </div>
+      <button type="button" class="btn btn-primary" id="demo-scan-btn" style="width:100%;">模擬感應</button>
+    </div>
   </div>
 </div>
 

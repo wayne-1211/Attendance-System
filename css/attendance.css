@@ -111,6 +111,21 @@
   margin: 22px 0 12px;
 }
 
+/* ================= demo mode panel ================= */
+.scan-demo-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.scan-demo-panel .field {
+  width: 100%;
+  margin-bottom: 0;
+}
+
 /* ================= summary tiles ================= */
 .tile-grid {
   display: grid;

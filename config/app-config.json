@@ -1,7 +1,8 @@
 {
   "brand": {
-    "name": "Workshop 點名系統",
-    "shortName": "點名"
+    "name": "Team 8725",
+    "subtitle": "Misty Panther · Workshop",
+    "logo": "images/brand/team-logo.png"
   },
   "nav": [
     { "route": "/summary", "label": "資料匯總", "icon": "home", "protected": false },

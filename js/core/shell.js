@@ -11,9 +11,9 @@ function renderNav() {
     .map((item) => {
       const lockBadge = item.protected ? iconSpan('lock', 'nav-lock-badge') : '';
       return `
-        <a class="nav-link" href="#${item.route}" data-route="${item.route}">
+        <a class="nav-link" href="#${item.route}" data-route="${item.route}" aria-label="${item.label}">
           ${iconSpan(item.icon)}
-          <span>${item.label}</span>
+          <span class="nav-label">${item.label}</span>
           ${lockBadge}
         </a>`;
     })
@@ -52,8 +52,13 @@ export function initShell(config) {
 
   const brandMark = document.getElementById('brand-mark');
   const brandName = document.getElementById('brand-name');
-  if (brandMark) brandMark.textContent = (config.brand?.shortName || '點').slice(0, 2);
+  const brandSub = document.getElementById('brand-sub');
+  if (brandMark && config.brand?.logo) {
+    brandMark.src = config.brand.logo;
+    brandMark.alt = `${config.brand?.name || ''} 隊徽`.trim();
+  }
   if (brandName) brandName.textContent = config.brand?.name || '點名系統';
+  if (brandSub) brandSub.textContent = config.brand?.subtitle || '';
 
   renderNav();
   renderAccountHost();

@@ -1,5 +1,6 @@
 import { listSessions } from '../services/db.js';
 import {
+  listMembers,
   findMemberByUID,
   addMember,
   findExistingAttendance,
@@ -11,7 +12,7 @@ import { openModal } from '../ui/modal.js';
 import { showToast } from '../ui/toast.js';
 import { formatTime, escapeHtml } from '../utils/format.js';
 
-export async function mountPage() {
+export async function mountPage(context) {
   const sessionSelect = document.getElementById('session-select');
   const supportBanner = document.getElementById('scan-support-banner');
   const target = document.getElementById('scan-target');
@@ -19,6 +20,13 @@ export async function mountPage() {
   const statusDesc = document.getElementById('scan-status-desc');
   const toggleBtn = document.getElementById('scan-toggle-btn');
   const recentList = document.getElementById('scan-recent-list');
+  const demoBadge = document.getElementById('demo-mode-badge');
+  const demoPanel = document.getElementById('scan-demo-panel');
+  const demoUidInput = document.getElementById('demo-uid-input');
+  const demoUidOptions = document.getElementById('demo-uid-options');
+  const demoScanBtn = document.getElementById('demo-scan-btn');
+
+  const isDemoMode = context?.params?.get('demo') === '1';
 
   let sessions = [];
   let stopScan = null;
@@ -35,6 +43,11 @@ export async function mountPage() {
   }
 
   function renderSupportBanner() {
+    if (isDemoMode) {
+      supportBanner.innerHTML =
+        '<div class="warning-banner">模擬模式（Demo Mode）已啟用：目前略過真實 NFC 讀卡，僅供電腦開發測試使用，正式上線請移除網址中的 ?demo=1。</div>';
+      return;
+    }
     if (isNfcSupported() && isSecureContextOk()) {
       supportBanner.innerHTML = '';
       return;
@@ -43,14 +56,19 @@ export async function mountPage() {
       ? 'Web NFC 需要 HTTPS 環境。'
       : '此瀏覽器不支援 Web NFC。請改用 Android 手機上的 Chrome 瀏覽器開啟本頁面，並確認手機已開啟 NFC 功能。';
     supportBanner.innerHTML = `<div class="error-banner">${reason}</div>`;
-    toggleBtn.disabled = true;
+    setActionDisabled(true);
+  }
+
+  function setActionDisabled(disabled) {
+    toggleBtn.disabled = disabled;
+    demoScanBtn.disabled = disabled;
   }
 
   async function loadSessions() {
     sessions = await listSessions();
     if (!sessions.length) {
       sessionSelect.innerHTML = '<option value="">尚無場次，請先建立場次</option>';
-      toggleBtn.disabled = true;
+      setActionDisabled(true);
       statusDesc.textContent = '請先到「場次管理」建立一個場次';
       return;
     }
@@ -206,6 +224,41 @@ export async function mountPage() {
     showToast(err.message || 'NFC 讀取發生錯誤', 'danger');
   }
 
+  function setupDemoUI() {
+    demoBadge.style.display = 'inline-flex';
+    demoPanel.style.display = 'flex';
+    toggleBtn.style.display = 'none';
+    statusTitle.textContent = '模擬模式';
+    statusDesc.textContent = '輸入或選擇卡號後按下方按鈕模擬刷卡，僅供開發測試';
+  }
+
+  async function populateDemoUidOptions() {
+    try {
+      const members = await listMembers();
+      demoUidOptions.innerHTML = members
+        .filter((m) => m.cardUID)
+        .map((m) => `<option value="${escapeHtml(m.cardUID)}">${escapeHtml(m.name)}</option>`)
+        .join('');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function handleDemoScan() {
+    if (!currentSessionId()) {
+      showToast('請先選擇場次', 'warning');
+      return;
+    }
+    const uid = demoUidInput.value.trim();
+    if (!uid) {
+      showToast('請輸入或選擇卡號', 'warning');
+      return;
+    }
+    handleReading(uid);
+    demoUidInput.value = '';
+    demoUidInput.focus();
+  }
+
   async function toggleScan() {
     if (isScanning) {
       stopScan?.();
@@ -228,7 +281,16 @@ export async function mountPage() {
   }
 
   toggleBtn.addEventListener('click', toggleScan);
+  demoScanBtn.addEventListener('click', handleDemoScan);
+  demoUidInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleDemoScan();
+  });
   sessionSelect.addEventListener('change', refreshRecentList);
+
+  if (isDemoMode) {
+    setupDemoUI();
+    await populateDemoUidOptions();
+  }
 
   renderSupportBanner();
   await loadSessions();

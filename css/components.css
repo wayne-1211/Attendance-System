@@ -466,6 +466,19 @@
   margin-bottom: 16px;
 }
 
+.warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 188, 94, 0.13);
+  border: 1px solid rgba(255, 188, 94, 0.35);
+  color: var(--warning-light);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
 /* ================= icons ================= */
 .ico-svg {
   display: inline-block;

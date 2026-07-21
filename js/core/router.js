@@ -41,7 +41,7 @@ function parseHash() {
   const raw = window.location.hash.replace(/^#/, '') || defaultRoute;
   const [path, query] = raw.split('?');
   const params = new URLSearchParams(query || '');
-  return { path: path || defaultRoute, params };
+  return { path: path || defaultRoute, params, raw };
 }
 
 async function runCleanup() {
@@ -57,7 +57,7 @@ async function runCleanup() {
 
 async function renderRoute() {
   const outlet = document.getElementById('page-outlet');
-  const { path, params } = parseHash();
+  const { path, params, raw } = parseHash();
   let entry = routeTable[path];
 
   if (!entry) {
@@ -89,8 +89,9 @@ async function renderRoute() {
       navigate: (nextPath) => {
         window.location.hash = `#${nextPath}`;
       },
-      // Lock page uses this to know which route to resume after unlocking.
-      resumePath: needsUnlock ? path : null,
+      // Lock page uses this to know which route (including any query string,
+      // e.g. /scan?demo=1) to resume after unlocking.
+      resumePath: needsUnlock ? raw : null,
     };
 
     const cleanup = await mod.mountPage(context);
