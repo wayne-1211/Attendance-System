@@ -1,28 +1,40 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-// 這個專案是純靜態 HTML / ES Modules（沒有用 npm + 打包工具），瀏覽器原生
-// import 只能解析相對路徑或完整網址，不能用 "firebase/app" 這種裸模組名稱，
-// 所以改成從 Firebase 官方 CDN 匯入。
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// ------------------------------------------------------------------
+// Firebase 專案設定值（attendance-system-412f9）。
+// 這些值本身不是機密，可以安全地留在公開的前端程式碼裡；
+// 真正的存取控制交給 firestore.rules，而不是隱藏這組設定。
+// ------------------------------------------------------------------
 const firebaseConfig = {
-  apiKey: "AIzaSyAoQB6SrzIvifO8QqNoMzm56JAHJS5qQiA",
-  authDomain: "attendance-system-412f9.firebaseapp.com",
-  projectId: "attendance-system-412f9",
-  storageBucket: "attendance-system-412f9.firebasestorage.app",
-  messagingSenderId: "332152843833",
-  appId: "1:332152843833:web:a03fc3b338c8c15dc967e8",
-  measurementId: "G-5LQ5B4908K"
+  apiKey: 'AIzaSyAoQB6SrzIvifO8QqNoMzm56JAHJS5qQiA',
+  authDomain: 'attendance-system-412f9.firebaseapp.com',
+  projectId: 'attendance-system-412f9',
+  storageBucket: 'attendance-system-412f9.firebasestorage.app',
+  messagingSenderId: '332152843833',
+  appId: '1:332152843833:web:a03fc3b338c8c15dc967e8',
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let app = null;
+let db = null;
 
-// db.js 及 auth-gate.js 都是用 `import { getDb } from './firebase-config.js'`
-// 再呼叫 getDb() 來取得 Firestore instance，所以這裡要 export 這個函式。
+export function initFirebase() {
+  if (app) return { app, db };
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+
+  // 開發時如果想接本機 Firestore Emulator，取消下一行註解：
+  // connectFirestoreEmulator(db, '127.0.0.1', 8080);
+
+  return { app, db };
+}
+
 export function getDb() {
+  if (!db) {
+    throw new Error('Firebase 尚未初始化，請先呼叫 initFirebase()。');
+  }
   return db;
 }
