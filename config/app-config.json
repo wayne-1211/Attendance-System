@@ -15,6 +15,6 @@
     { "key": "totalSessions", "label": "場次總數", "color": "info" },
     { "key": "totalMembers", "label": "登記成員", "color": "info" },
     { "key": "todayCheckins", "label": "今日簽到", "color": "success" },
-    { "key": "activeSessionRate", "label": "目前場次出席率", "color": "warning" }
+    { "key": "selectionRate", "label": "目前選取出席率", "color": "warning" }
   ]
 }

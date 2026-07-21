@@ -1,25 +1,44 @@
-import { listSessions, addSession, updateSession, deleteSession } from '../services/db.js';
+import {
+  listSessions,
+  addSession,
+  updateSession,
+  deleteSession,
+  listAttendanceForSession,
+  deleteAttendance,
+} from '../services/db.js';
 import { openModal, confirmModal } from '../ui/modal.js';
 import { showToast } from '../ui/toast.js';
 import { icon } from '../utils/icon.js';
-import { todayDateInputValue } from '../utils/format.js';
-import { escapeHtml } from '../utils/format.js';
+import { todayDateInputValue, formatTime, escapeHtml } from '../utils/format.js';
 
 export async function mountPage() {
   const listEl = document.getElementById('session-list');
   const addBtn = document.getElementById('add-session-btn');
+  const attendeesCard = document.getElementById('session-attendees-card');
+  const attendeesTitle = document.getElementById('session-attendees-title');
+  const attendeesList = document.getElementById('session-attendees-list');
+
+  let sessions = [];
+  let selectedSessionId = null;
 
   async function refresh() {
     listEl.innerHTML = '<div class="state-block"><div class="spinner"></div>載入中…</div>';
     try {
-      const sessions = await listSessions();
-      renderList(sessions);
+      sessions = await listSessions();
+      renderList();
+      if (selectedSessionId && !sessions.some((s) => s.id === selectedSessionId)) {
+        // the previously selected session was deleted
+        selectedSessionId = null;
+        attendeesCard.style.display = 'none';
+      } else if (selectedSessionId) {
+        await refreshAttendees();
+      }
     } catch (err) {
       listEl.innerHTML = `<div class="error-banner">載入場次失敗：${escapeHtml(err.message || '')}</div>`;
     }
   }
 
-  function renderList(sessions) {
+  function renderList() {
     if (!sessions.length) {
       listEl.innerHTML = `
         <div class="list-empty">
@@ -32,7 +51,7 @@ export async function mountPage() {
     listEl.innerHTML = sessions
       .map(
         (s) => `
-        <div class="list-row" data-id="${s.id}">
+        <div class="list-row ${s.id === selectedSessionId ? 'is-selected' : ''}" data-id="${s.id}" style="cursor:pointer;">
           <div class="list-row-main">
             <div class="list-row-name">${escapeHtml(s.name)}</div>
             <div class="list-row-meta">${escapeHtml(s.date || '')}${s.note ? ' · ' + escapeHtml(s.note) : ''}</div>
@@ -45,11 +64,17 @@ export async function mountPage() {
       )
       .join('');
 
+    listEl.querySelectorAll('.list-row').forEach((row) => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('[data-action]')) return; // let action buttons handle themselves
+        selectSession(row.dataset.id);
+      });
+    });
+
     listEl.querySelectorAll('[data-action="edit"]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.closest('.list-row').dataset.id;
-        const session = sessions.find((s) => s.id === id);
-        openSessionForm(session);
+        openSessionForm(sessions.find((s) => s.id === id));
       });
     });
 
@@ -73,9 +98,80 @@ export async function mountPage() {
     });
   }
 
+  function selectSession(sessionId) {
+    selectedSessionId = sessionId;
+    renderList();
+    refreshAttendees();
+  }
+
+  async function refreshAttendees() {
+    const session = sessions.find((s) => s.id === selectedSessionId);
+    if (!session) {
+      attendeesCard.style.display = 'none';
+      return;
+    }
+
+    attendeesCard.style.display = 'block';
+    attendeesTitle.textContent = `已簽到人員・${session.name}`;
+    attendeesList.innerHTML = '<div class="state-block"><div class="spinner"></div>載入中…</div>';
+
+    try {
+      const records = await listAttendanceForSession(selectedSessionId);
+      renderAttendees(records);
+    } catch (err) {
+      attendeesList.innerHTML = `<div class="error-banner">載入簽到名單失敗：${escapeHtml(err.message || '')}</div>`;
+    }
+  }
+
+  function renderAttendees(records) {
+    if (!records.length) {
+      attendeesList.innerHTML = `
+        <div class="list-empty">
+          <div class="list-empty-title">此場次尚無簽到紀錄</div>
+          <div class="list-empty-desc">到「點名讀卡」開始感應</div>
+        </div>`;
+      return;
+    }
+
+    attendeesList.innerHTML = records
+      .map(
+        (r) => `
+        <div class="list-row" data-attendance-id="${r.id}">
+          <div class="list-row-main">
+            <div class="list-row-name">${escapeHtml(r.memberName)}</div>
+            <div class="list-row-meta">簽到時間 ${formatTime(r.checkedInAt)}${r.cardUID ? ' · 卡號 ' + escapeHtml(r.cardUID) : ''}</div>
+          </div>
+          <div class="list-row-actions">
+            <button type="button" class="btn btn-icon btn-ghost" data-action="delete-attendance" title="刪除這筆簽到紀錄">${icon('trash')}</button>
+          </div>
+        </div>`
+      )
+      .join('');
+
+    attendeesList.querySelectorAll('[data-action="delete-attendance"]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('.list-row');
+        const attendanceId = row.dataset.attendanceId;
+        const name = row.querySelector('.list-row-name').textContent;
+        const ok = await confirmModal({
+          title: '刪除簽到紀錄',
+          message: `確定要刪除「${escapeHtml(name)}」在此場次的簽到紀錄嗎？此操作無法復原。`,
+        });
+        if (!ok) return;
+        try {
+          await deleteAttendance(attendanceId);
+          showToast('已刪除簽到紀錄', 'success');
+          refreshAttendees();
+        } catch (err) {
+          showToast(`刪除失敗：${err.message || ''}`, 'danger');
+        }
+      });
+    });
+  }
+
   function openSessionForm(existing) {
     const isEdit = Boolean(existing);
-    const { close } = openModal({
+    openModal({
       title: isEdit ? '編輯場次' : '新增場次',
       bodyHtml: `
         <div class="field">
@@ -121,7 +217,6 @@ export async function mountPage() {
         },
       ],
     });
-    void close;
   }
 
   addBtn.addEventListener('click', () => openSessionForm(null));

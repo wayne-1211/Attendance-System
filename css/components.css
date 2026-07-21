@@ -250,6 +250,10 @@
   box-shadow: 0 0 0 1px rgba(255, 188, 94, 0.35), 0 0 14px rgba(255, 188, 94, 0.18);
 }
 
+.list-row.is-selected {
+  border-color: var(--primary);
+}
+
 .list-row-main {
   display: flex;
   flex-direction: column;
